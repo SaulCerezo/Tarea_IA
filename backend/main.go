@@ -80,3 +80,46 @@ func neighbors(s State) []Neighbor {
 	}
 	return out
 }
+
+// ----- A* implementation -----
+
+type Node struct {
+	state  State
+	g, h   int
+	index  int // index in the heap
+	parent *Node
+	move   string
+}
+
+// Priority Queue (min-heap by f = g + h)
+type PriorityQueue []*Node
+
+func (pq PriorityQueue) Len() int { return len(pq) }
+func (pq PriorityQueue) Less(i, j int) bool {
+	fi := pq[i].g + pq[i].h
+	fj := pq[j].g + pq[j].h
+	if fi == fj {
+		// Tie-breaker: lower h preferred
+		return pq[i].h < pq[j].h
+	}
+	return fi < fj
+}
+func (pq PriorityQueue) Swap(i, j int) {
+	pq[i], pq[j] = pq[j], pq[i]
+	pq[i].index = i
+	pq[j].index = j
+}
+func (pq *PriorityQueue) Push(x interface{}) {
+	n := len(*pq)
+	item := x.(*Node)
+	item.index = n
+	*pq = append(*pq, item)
+}
+func (pq *PriorityQueue) Pop() interface{} {
+	old := *pq
+	n := len(old)
+	item := old[n-1]
+	item.index = -1
+	*pq = old[:n-1]
+	return item
+}
