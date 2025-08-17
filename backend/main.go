@@ -1,0 +1,82 @@
+package main
+
+import (
+	"strconv"
+	"strings"
+)
+
+// ----- Puzzle utilities -----
+
+type State [9]int
+
+var goal State = State{1, 2, 3, 4, 5, 6, 7, 8, 0}
+
+func stateKey(s State) string {
+	var b strings.Builder
+	for i, v := range s {
+		if i > 0 {
+			b.WriteByte(',')
+		}
+		b.WriteString(strconv.Itoa(v))
+	}
+	return b.String()
+}
+
+func manhattan(s State) int {
+	sum := 0
+	for i, v := range s {
+		if v == 0 {
+			continue
+		}
+		goalRow := (v - 1) / 3
+		goalCol := (v - 1) % 3
+		row := i / 3
+		col := i % 3
+		d := abs(goalRow-row) + abs(goalCol-col)
+		sum += d
+	}
+	return sum
+}
+
+func abs(x int) int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+type Neighbor struct {
+	state State
+	move  string
+}
+
+func neighbors(s State) []Neighbor {
+	// Find blank (0)
+	blank := 0
+	for i, v := range s {
+		if v == 0 {
+			blank = i
+			break
+		}
+	}
+	r, c := blank/3, blank%3
+	var out []Neighbor
+	swap := func(i, j int) State {
+		ns := s
+		ns[i], ns[j] = ns[j], ns[i]
+		return ns
+	}
+	if r > 0 { // up
+		out = append(out, Neighbor{swap(blank, blank-3), "UP"})
+	}
+	if r < 2 { // down
+		out = append(out, Neighbor{swap(blank, blank+3), "DOWN"})
+	}
+	if c > 0 { // left
+		out = append(out, Neighbor{swap(blank, blank-1), "LEFT"})
+	}
+	if c < 2 { // right
+		out = append(out, Neighbor{swap(blank, blank+1), "RIGHT"})
+	}
+	return out
+}
