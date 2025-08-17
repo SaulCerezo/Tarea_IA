@@ -1,0 +1,24 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji'; background: #0b1021; color: #e8eaf6; }
+#root { min-height: 100vh; display: grid; place-items: center; }
+.container { width: 100%; max-width: 900px; padding: 24px; }
+h1 { margin: 0 0 8px; font-weight: 700; }
+.subtitle { opacity: 0.75; margin-bottom: 16px; }
+.panel { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+.grid { display: grid; grid-template-columns: repeat(3, 110px); grid-template-rows: repeat(3, 110px); gap: 10px; padding: 12px; background: #0f1533; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.3) inset, 0 10px 30px rgba(0,0,0,.3); }
+.tile { display: grid; place-items: center; font-size: 38px; font-weight: 700; border-radius: 14px; background: linear-gradient(180deg,#2b3a7a,#16204c); box-shadow: 0 6px 0 #0e1636; transition: transform .15s ease, opacity .2s; }
+.tile.zero { background: transparent; box-shadow: none; border: 2px dashed #2a346d; opacity: .35; }
+.tile.moveable { outline: 2px solid rgba(255,255,255,.2); cursor: pointer;}
+.tile.moveable:hover { transform: translateY(-2px); }
+
+.controls { display: grid; gap: 12px; align-content: start; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+input[type="number"] { width: 90px; padding: 10px 12px; border-radius: 10px; border: 1px solid #2d3770; background: #0f1533; color: #d8dcff; }
+button { padding: 10px 14px; border-radius: 10px; border: 1px solid #2d3770; background: #1a2250; color: #e8eaf6; cursor: pointer; font-weight: 600; }
+button:hover { filter: brightness(1.1); }
+button:disabled { opacity: 0.55; cursor: not-allowed; }
+kbd { padding: 2px 6px; border: 1px solid #2d3770; border-bottom-width: 2px; border-radius: 6px; background: #0f1533; }
+.footer { margin-top: 16px; font-size: 14px; opacity: .7; }
+.badge { font-size: 13px; padding: 6px 10px; border-radius: 999px; background: #0f1533; display: inline-flex; gap: 8px; align-items: center; margin-left: 8px; }
+code { background: #0f1533; padding: 2px 6px; border-radius: 6px; }
