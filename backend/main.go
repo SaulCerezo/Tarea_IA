@@ -2,7 +2,10 @@ package main
 
 import (
 	"container/heap"
+	"encoding/json"
+	"log"
 	"math/rand"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -220,4 +223,111 @@ func shuffle(n int) State {
 		lastMove = choice.move
 	}
 	return s
+}
+
+// ----- HTTP API -----
+
+type SolveRequest struct {
+	Start []int `json:"start"`
+}
+
+type SolveResponse struct {
+	Moves    [][]int  `json:"moves"`
+	Actions  []string `json:"actions"`
+	Cost     int      `json:"cost"`
+	Expanded int      `json:"expanded"`
+	Ok       bool     `json:"ok"`
+	Message  string   `json:"message,omitempty"`
+}
+
+type ShuffleRequest struct {
+	Steps int `json:"steps"`
+}
+
+type StateResponse struct {
+	State []int `json:"state"`
+}
+
+func withCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		w.Header().Set("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func handleInit(w http.ResponseWriter, r *http.Request) {
+	resp := StateResponse{State: []int{1, 2, 3, 4, 5, 6, 7, 8, 0}}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func handleShuffle(w http.ResponseWriter, r *http.Request) {
+	var req ShuffleRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
+		return
+	}
+	if req.Steps <= 0 {
+		req.Steps = 20
+	}
+	s := shuffle(req.Steps)
+	resp := StateResponse{State: make([]int, 9)}
+	for i := 0; i < 9; i++ {
+		resp.State[i] = s[i]
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func handleSolve(w http.ResponseWriter, r *http.Request) {
+	var req SolveRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
+		return
+	}
+	if len(req.Start) != 9 {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "start must be length 9"})
+		return
+	}
+	var st State
+	for i := 0; i < 9; i++ {
+		st[i] = req.Start[i]
+	}
+	path, actions, expanded, ok := aStar(st)
+	resp := SolveResponse{
+		Moves:    path,
+		Actions:  actions,
+		Cost:     len(actions),
+		Expanded: expanded,
+		Ok:       ok,
+	}
+	if !ok {
+		resp.Message = "no solution found (should not happen for 8-puzzle reached via legal moves)"
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+func writeJSON(w http.ResponseWriter, code int, v interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+	_ = enc.Encode(v)
+}
+
+func main() {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/init", handleInit)
+	mux.HandleFunc("/api/shuffle", handleShuffle)
+	mux.HandleFunc("/api/solve", handleSolve)
+
+	addr := ":8080"
+	log.Printf("8-puzzle Go API listening on %s\n", addr)
+	if err := http.ListenAndServe(addr, withCORS(mux)); err != nil {
+		log.Fatal(err)
+	}
 }
